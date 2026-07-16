@@ -32,10 +32,6 @@ on:
         required: false
         type: boolean
         default: true
-  schedule:
-    # Run job at 00:00 UTC (4:00 PM PST / 5:00 PM PDT)
-    - cron: "0 0 * * *"
-
 env:
   POETRY_VERSION: "1.8.3"
   PYTHON_VERSION: "3.13"
