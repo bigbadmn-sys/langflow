@@ -1,11 +1,7 @@
 name: "Mend"
 
 on:
-  push:
-    branches: ["release-*", "main"]
-  pull_request:
-    branches: ["release-*", "main"]
-
+  workflow_dispatch:
 concurrency:
   group: mend-${{ github.ref }}
   cancel-in-progress: true
