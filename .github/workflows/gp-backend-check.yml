@@ -4,6 +4,14 @@ on:
   pull_request:
     paths:
       - "src/lfx/src/lfx/components/**"
+      # Bundle component strings reach core locales/en.json because the
+      # extractor loads every installed extension bundle through
+      # lfx.extension.load_installed_extensions(), so an edit to a bundle's
+      # display_name/description/info must re-trigger the extractor too --
+      # otherwise en.json silently drifts from src/bundles/**.  The install
+      # step below is `uv sync --no-dev` at the workspace root, which is what
+      # puts every curated lfx-* bundle on importlib.metadata for that walk.
+      - "src/bundles/**"
       - "src/backend/base/langflow/initial_setup/starter_projects/**"
 
 jobs:
@@ -18,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -27,8 +35,9 @@ jobs:
         run: python scripts/gp/bake_note_keys.py
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.0.0
         with:
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           python-version: "3.12"

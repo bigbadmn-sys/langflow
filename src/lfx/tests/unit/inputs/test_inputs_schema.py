@@ -3,7 +3,17 @@ from types import NoneType
 from typing import Union
 
 import pytest
-from lfx.inputs.inputs import BoolInput, DictInput, FloatInput, InputTypes, IntInput, MessageTextInput, NestedDictInput
+from lfx.inputs.inputs import (
+    BoolInput,
+    DictInput,
+    FloatInput,
+    InputTypes,
+    IntInput,
+    MessageTextInput,
+    MultiselectInput,
+    NestedDictInput,
+    instantiate_input,
+)
 from lfx.io.schema import schema_to_langflow_inputs
 from lfx.schema.data import Data
 from lfx.schema.json_schema import create_input_schema_from_json_schema
@@ -11,6 +21,17 @@ from lfx.template import Input, Output
 from lfx.template.field.base import UNDEFINED
 from lfx.type_extraction.type_extraction import post_process_type
 from pydantic import BaseModel, Field, ValidationError
+
+
+@pytest.mark.parametrize("by_alias", [True, False])
+@pytest.mark.parametrize("is_list", [True, False])
+def test_multiselect_serialized_field_names_round_trip(by_alias, is_list):
+    original = MultiselectInput(name="checks", options=["PII"], value=["PII"], is_list=is_list)
+    payload = original.model_dump(by_alias=by_alias)
+    payload.pop("_input_type", None)
+    restored = instantiate_input("MultiselectInput", payload)
+    assert restored.is_list is is_list
+    assert restored.value == ["PII"]
 
 
 class TestInput:
@@ -108,12 +129,25 @@ class TestInput:
             "fileTypes": [],
             "file_path": "",
             "advanced": False,
+            "api_editable": False,
             "title_case": False,
             "dynamic": False,
             "info": "",
             "input_types": ["Text"],
             "load_from_db": False,
         }
+
+    def test_input_api_editable_flag(self):
+        input_obj = Input(field_type="str")
+        assert input_obj.to_dict()["api_editable"] is False
+        input_obj.api_editable = True
+        assert input_obj.to_dict()["api_editable"] is True
+
+    def test_mixin_input_api_editable_flag(self):
+        default_input = MessageTextInput(name="prompt")
+        assert default_input.to_dict()["api_editable"] is False
+        exposed_input = MessageTextInput(name="prompt", api_editable=True)
+        assert exposed_input.to_dict()["api_editable"] is True
 
 
 class TestOutput:
